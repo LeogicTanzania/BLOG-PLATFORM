@@ -101,7 +101,7 @@ exports.deletePost = async (req, res, next) => {
     }
 
     // Check ownership or admin role
-    if (post.author.toString !== req.params.id && req.user.role !== "admin") {
+    if (post.author.toString() !== req.user.id && req.user.role !== "admin") {
       return next(new ErrorResponse(`Not authorized to delete this post`, 403));
     }
 
