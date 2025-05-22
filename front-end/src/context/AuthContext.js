@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
+import api from "../services/api";
 
 // Create authentication context object
 const AuthContext = createContext();
@@ -22,7 +23,7 @@ export function AuthProvider({ children }) {
 
         // If token exists make request to get the current user
         if (token) {
-          const res = await axios.get("/api/auth/currentuser", {
+          const res = await api.get("/api/auth/currentuser", {
             headers: { Authorization: `Bearer ${token}` },
           });
 
@@ -49,7 +50,7 @@ export function AuthProvider({ children }) {
       password,
     };
 
-    const res = await axios.post("/api/auth/login", requestBody);
+    const res = await api.post("/api/auth/login", requestBody);
 
     // Save received token in localStorage
     localStorage.setItem("token", res.data.token);
@@ -75,7 +76,7 @@ export function AuthProvider({ children }) {
       password,
     };
 
-    const res = await axios.post("/api/auth/register", requestBody);
+    const res = await api.post("/api/auth/register", requestBody);
 
     // Save token & user data in localStorage & state
     localStorage.setItem("token", res.data.token);
