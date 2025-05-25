@@ -4,6 +4,7 @@ const { check } = require("express-validator");
 const {
   getAllPosts,
   getSinglePost,
+  getPostsByUser,
   createPost,
   updatePost,
   deletePost,
@@ -16,6 +17,9 @@ router.get("/", getAllPosts);
 
 // GET SINGLE POST
 router.get("/:id", getSinglePost);
+
+// GET ALL POSTS BY USER
+router.get("/user/:userId", getPostsByUser);
 
 // POST/Create NEW POST
 router.post(

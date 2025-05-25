@@ -41,6 +41,27 @@ exports.getSinglePost = async (req, res, next) => {
   }
 };
 
+// GET ALL POST FOR SINGLE USER
+exports.getPostsByUser = async (req, res, next) => {
+  try {
+    // Get userId
+    const userId = req.params.userId;
+
+    // Find all posts by this user
+    const posts = await Post.find({ author: userId })
+      .populate("author", "username profilePhoto")
+      .sort({ createdAt: -1 }); // Newest First
+
+    res.status(200).json({
+      success: true,
+      count: posts.length,
+      data: posts,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // CREATE NEW POST
 exports.createPost = async (req, res, next) => {
   // Add author to request body
