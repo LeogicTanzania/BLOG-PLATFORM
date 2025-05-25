@@ -9,10 +9,10 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPublicPosts = async () => {
+    const fetchAllPosts = async () => {
       try {
         const res = await api.get("/api/posts/");
-        setFeaturedPosts(res.data.slice(0, 6));
+        setFeaturedPosts(res.data.data);
       } catch (error) {
         console.error("Failed to fetch posts:", error);
       } finally {
@@ -20,7 +20,7 @@ export default function Home() {
       }
     };
 
-    fetchPublicPosts();
+    fetchAllPosts();
   }, []);
 
   if (user) {
@@ -54,21 +54,28 @@ export default function Home() {
         <h2>Recently Popular Stories</h2>
         {loading ? (
           <div className="loading-spinner"></div>
-        ) : (
+        ) : featuredPosts.length > 0 ? (
           <div className="post-grid">
             {featuredPosts.map((post) => (
               <div key={post._id} className="post-card">
                 <h3>{post.title}</h3>
-                <p className="excerpt">{post.content.substring(0, 100)}...</p>
-                <div className="preview-overlay">
-                  <p>Sign up to read full story</p>
-                  <Link to="/register" className="read-more">
-                    Join Now
-                  </Link>
-                </div>
+                <p className="excerpt">
+                  {post.content.substring(0, 50)}
+                  {post.content.length > 50 ? "..." : ""}
+                </p>
+                {!user && (
+                  <div className="preview-overlay">
+                    <p>Sign up to read full story</p>
+                    <Link to="/register" className="read-more">
+                      Join Now
+                    </Link>
+                  </div>
+                )}
               </div>
             ))}
           </div>
+        ) : (
+          <p className="no-posts">No featured posts available</p>
         )}
       </section>
 
