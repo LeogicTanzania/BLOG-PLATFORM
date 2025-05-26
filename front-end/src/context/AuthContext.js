@@ -56,7 +56,10 @@ export function AuthProvider({ children }) {
     localStorage.setItem("token", res.data.token);
 
     // Save user data in state
-    setUser(res.data.user);
+    setUser({
+      id: res.data.user._id,
+      username: res.data.user.username,
+    });
   };
 
   // Logout handler

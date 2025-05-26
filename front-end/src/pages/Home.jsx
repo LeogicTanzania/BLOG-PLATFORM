@@ -31,10 +31,10 @@ export default function Home() {
 
   // Fetch user's posts
   useEffect(() => {
-    const fetchUserPosts = async (userId) => {
-      if (user) {
+    const fetchUserPosts = async () => {
+      if (user?.id) {
         try {
-          const res = await api.get(`/posts/user/${userId}`);
+          const res = await api.get(`/posts/user/${user.id}`);
           setUserPosts(res.data.data);
         } catch (error) {
           console.error("Failed to fetch user's posts:", error);
@@ -65,18 +65,18 @@ export default function Home() {
         {/* Content Tabs */}
         <div className="content-tabs">
           <button
-            className={`tab ${activeTab === "my-posts" ? "active" : ""}`}
-            onClick={() => setActiveTab("my-posts")}
-          >
-            MY POSTS
-          </button>
-          <button
             className={`tab ${activeTab === "recommended" ? "active" : ""}`}
             onClick={() => {
               setActiveTab("recommended");
             }}
           >
-            RECOMMENDED
+            ALL POSTS
+          </button>
+          <button
+            className={`tab ${activeTab === "my-posts" ? "active" : ""}`}
+            onClick={() => setActiveTab("my-posts")}
+          >
+            MY POSTS
           </button>
         </div>
 
@@ -86,7 +86,7 @@ export default function Home() {
           <div className="posts-column">
             {activeTab === "my-posts" ? (
               <>
-                {loadingUserPosts ? (
+                {loading ? (
                   <div className="loading-spinner"></div>
                 ) : (
                   <div className="posts-list">
@@ -102,12 +102,7 @@ export default function Home() {
                               >
                                 Edit
                               </Link>
-                              <button
-                                className="delete-button"
-                                onClick={() => handleDeletePost(post._id)}
-                              >
-                                Delete
-                              </button>
+                              <button className="delete-button">Delete</button>
                             </div>
                           </div>
                           <p className="post-excerpt">
@@ -136,11 +131,11 @@ export default function Home() {
               </>
             ) : (
               <>
-                {loadingRecommended ? (
+                {loading ? (
                   <div className="loading-spinner"></div>
                 ) : (
                   <div className="posts-list">
-                    {recommendedPosts.map((post) => (
+                    {featuredPosts.map((post) => (
                       <div key={post._id} className="post-card">
                         <h3>{post.title}</h3>
                         <div className="post-author">
