@@ -23,7 +23,7 @@ router.get("/user/:userId", getPostsByUser);
 
 // POST/Create NEW POST
 router.post(
-  "/",
+  "/create-post",
   [
     protect,
     uploadImage,

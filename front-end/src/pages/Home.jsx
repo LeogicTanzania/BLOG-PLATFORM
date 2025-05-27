@@ -22,7 +22,7 @@ export default function Home() {
       } catch (error) {
         console.error("Failed to fetch posts:", error);
       } finally {
-        setLoading(false);
+        setLoadingUserPosts(false);
       }
     };
 
@@ -34,12 +34,13 @@ export default function Home() {
     const fetchUserPosts = async () => {
       if (user?.id) {
         try {
-          const res = await api.get(`/posts/user/${user.id}`);
+          const res = await api.get(`/api/posts/user/${user.id}`);
+          console.log("USER POSTS:", res);
           setUserPosts(res.data.data);
         } catch (error) {
           console.error("Failed to fetch user's posts:", error);
         } finally {
-          setLoadingUserPosts(false);
+          setLoading(false);
         }
       }
     };
@@ -86,7 +87,7 @@ export default function Home() {
           <div className="posts-column">
             {activeTab === "my-posts" ? (
               <>
-                {loading ? (
+                {loadingUserPosts ? (
                   <div className="loading-spinner"></div>
                 ) : (
                   <div className="posts-list">
