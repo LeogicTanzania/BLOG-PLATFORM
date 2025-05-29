@@ -5,48 +5,50 @@ import api from "../services/api";
 
 export default function Home() {
   const { user } = useAuth();
-  const [featuredPosts, setFeaturedPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingUserPosts, setLoadingUserPosts] = useState(true);
-  const [userPosts, setUserPosts] = useState([]);
-  const [activeTab, setActiveTab] = useState("my-posts");
-  const [loadingRecommended, setLoadingRecommended] = useState(true);
-  const [recommendedPosts, setRecommendedPosts] = useState([]);
 
-  // Fetch all posts
+  // State for public posts
+  const [publicPosts, setPublicPosts] = useState([]);
+  const [loadingPublicPosts, setLoadingPublicPosts] = useState(true);
+
+  // State for user's posts
+  const [userPosts, setUserPosts] = useState([]);
+  const [loadingUserPosts, setLoadingUserPosts] = useState(true);
+
+  const [activeTab, setActiveTab] = useState("all-posts");
+
+  // Fetch all public posts
   useEffect(() => {
-    const fetchAllPosts = async () => {
+    const fetchPublicPosts = async () => {
       try {
         const res = await api.get("/api/posts/");
-        setFeaturedPosts(res.data.data);
+        setPublicPosts(res.data.data);
       } catch (error) {
-        console.error("Failed to fetch posts:", error);
+        console.error("Failed to fetch public posts:", error);
       } finally {
-        setLoadingUserPosts(false);
+        setLoadingPublicPosts(false);
       }
     };
 
-    fetchAllPosts();
+    fetchPublicPosts();
   }, []);
 
   // Fetch user's posts
   useEffect(() => {
     const fetchUserPosts = async () => {
-      if (user?.id) {
+      if (user?._id) {
         try {
-          const res = await api.get(`/api/posts/user/${user.id}`);
-          console.log("USER POSTS:", res);
+          const res = await api.get(`/api/posts/user/${user._id}`);
           setUserPosts(res.data.data);
         } catch (error) {
           console.error("Failed to fetch user's posts:", error);
         } finally {
-          setLoading(false);
+          setLoadingUserPosts(false);
         }
       }
     };
 
     fetchUserPosts();
-  }, [user]);
+  }, [user]); // Only runs when user changes
 
   // VIEW FOR LOGGED IN USER'S
   if (user) {
@@ -66,9 +68,9 @@ export default function Home() {
         {/* Content Tabs */}
         <div className="content-tabs">
           <button
-            className={`tab ${activeTab === "recommended" ? "active" : ""}`}
+            className={`tab ${activeTab === "all-posts" ? "active" : ""}`}
             onClick={() => {
-              setActiveTab("recommended");
+              setActiveTab("all-posts");
             }}
           >
             ALL POSTS
@@ -132,33 +134,45 @@ export default function Home() {
               </>
             ) : (
               <>
-                {loading ? (
+                {loadingPublicPosts ? (
                   <div className="loading-spinner"></div>
                 ) : (
                   <div className="posts-list">
-                    {featuredPosts.map((post) => (
-                      <div key={post._id} className="post-card">
-                        <h3>{post.title}</h3>
-                        <div className="post-author">
-                          <img
-                            src={
-                              post.author.profilePhoto || "/default-avatar.png"
-                            }
-                            alt={post.author.username}
-                          />
-                          <span>{post.author.username}</span>
+                    {publicPosts.length > 0 ? (
+                      publicPosts.map((post) => (
+                        <div key={post._id} className="post-card">
+                          <h3>{post.title}</h3>
+                          <div className="post-author">
+                            <img
+                              src={
+                                post.author.profilePhoto ||
+                                "/default-avatar.png"
+                              }
+                              alt={post.author.username}
+                            />
+                            <span>{post.author.username}</span>
+                          </div>
+                          <p className="post-excerpt">
+                            {post.content.substring(0, 200)}...
+                          </p>
+                          <div className="post-actions">
+                            <Link
+                              to={`/posts/${post._id}`}
+                              className="read-more"
+                            >
+                              Read More
+                            </Link>
+                            <button className="bookmark-button">
+                              Bookmark
+                            </button>
+                          </div>
                         </div>
-                        <p className="post-excerpt">
-                          {post.content.substring(0, 200)}...
-                        </p>
-                        <div className="post-actions">
-                          <Link to={`/posts/${post._id}`} className="read-more">
-                            Read More
-                          </Link>
-                          <button className="bookmark-button">Bookmark</button>
-                        </div>
+                      ))
+                    ) : (
+                      <div className="no-posts">
+                        <p>No posts available yet</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
               </>
@@ -221,11 +235,11 @@ export default function Home() {
       {/* Featured Posts */}
       <section className="featured-section">
         <h2>Recently Popular Stories</h2>
-        {loading ? (
+        {loadingPublicPosts ? (
           <div className="loading-spinner"></div>
-        ) : featuredPosts.length > 0 ? (
+        ) : publicPosts.length > 0 ? (
           <div className="post-grid">
-            {featuredPosts.map((post) => (
+            {publicPosts.map((post) => (
               <div key={post._id} className="post-card">
                 <h3>{post.title}</h3>
                 <p className="excerpt">
