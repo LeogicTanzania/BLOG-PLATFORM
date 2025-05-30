@@ -2,6 +2,10 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import defaultAvatar from "../assets/avatar.jpg";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Home() {
   const { user } = useAuth();
@@ -15,6 +19,32 @@ export default function Home() {
   const [loadingUserPosts, setLoadingUserPosts] = useState(true);
 
   const [activeTab, setActiveTab] = useState("all-posts");
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const navigate = useNavigate();
+
+  const handleDeletePost = async (postId) => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this post? This action cannot be undone."
+      )
+    ) {
+      try {
+        await api.delete(`/api/posts/${postId}`);
+
+        // update UI state after successfull deletion
+        if (activeTab === "my-posts") {
+          setUserPosts(userPosts.filter((post) => post._id !== postId));
+        } else {
+          setPublicPosts(publicPosts.filter((post) => post._id !== postId));
+        }
+
+        toast.success("Post deleted successfully");
+      } catch (error) {
+        console.error("Failed to delete post:", error);
+      }
+    }
+  };
 
   // Fetch all public posts
   useEffect(() => {
@@ -105,12 +135,26 @@ export default function Home() {
                               >
                                 Edit
                               </Link>
-                              <button className="delete-button">Delete</button>
+                              <button
+                                className="delete-button"
+                                onClick={() => handleDeletePost(post._id)}
+                                disabled={isDeleting}
+                              >
+                                {isDeleting ? (
+                                  <>
+                                    <span className="spinner"></span>{" "}
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  "Delete"
+                                )}
+                              </button>
                             </div>
                           </div>
                           <p className="post-excerpt">
                             {post.content.substring(0, 150)}...
                           </p>
+                          <br />
                           <div className="post-stats">
                             <span>Views: {post.views || 0}</span>
                             <span>Comments: {post.comments?.length || 0}</span>
@@ -124,9 +168,6 @@ export default function Home() {
                     ) : (
                       <div className="no-posts">
                         <p>You haven't created any posts yet.</p>
-                        <Link to="/create-post" className="create-first-post">
-                          Create Your First Post
-                        </Link>
                       </div>
                     )}
                   </div>
@@ -141,17 +182,21 @@ export default function Home() {
                     {publicPosts.length > 0 ? (
                       publicPosts.map((post) => (
                         <div key={post._id} className="post-card">
-                          <h3>{post.title}</h3>
                           <div className="post-author">
                             <img
-                              src={
-                                post.author.profilePhoto ||
-                                "/default-avatar.png"
-                              }
+                              src={post.author.profilePhoto || defaultAvatar}
                               alt={post.author.username}
+                              style={{
+                                width: "64px",
+                                height: "64px",
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                              }}
                             />
                             <span>{post.author.username}</span>
                           </div>
+                          <h3>{post.title}</h3>
+                          <br />
                           <p className="post-excerpt">
                             {post.content.substring(0, 200)}...
                           </p>
@@ -162,9 +207,6 @@ export default function Home() {
                             >
                               Read More
                             </Link>
-                            <button className="bookmark-button">
-                              Bookmark
-                            </button>
                           </div>
                         </div>
                       ))
@@ -192,17 +234,6 @@ export default function Home() {
                 <span>
                   {userPosts.reduce((sum, post) => sum + (post.views || 0), 0)}
                 </span>
-              </div>
-            </div>
-
-            <div className="sidebar-section">
-              <h4>Draft Posts</h4>
-              {/* Implement draft posts functionality */}
-              <div className="drafts-list">
-                <p>No draft posts available</p>
-                <Link to="/create-post" className="new-draft">
-                  Start New Draft
-                </Link>
               </div>
             </div>
           </div>

@@ -24,6 +24,7 @@ export default function App() {
           <Route path="/posts/:id" element={<Post />} />
           <Route path="/" element={<Home />} />
           <Route path="/create-post" element={<CreatePost />} />
+          <Route path="/edit-post/:id" element={<EditPost />} />
 
           {/* SECURITY GUARD: Wrapping protected routes in PrivateRoute to restrict access */}
           {/* ie: "Hey these 2 routes should only be seen by logged-in users, if not don't let them in." */}

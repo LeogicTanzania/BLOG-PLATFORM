@@ -139,8 +139,7 @@ export default function CreatePost() {
               <button
                 className="remove-image-btn"
                 onClick={() => {
-                  setImagePreview(null);
-                  // If using react-hook-form, you may need to clear the file input
+                  handleRemoveImage();
                 }}
               >
                 Remove Image
