@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Post from "./pages/Post";
 import CreatePost from "./pages/CreatePost";
+import Profile from "./pages/Profile";
 import "./App.css";
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
           <Route element={<PrivateRoute />}>
             <Route path="/create-post" element={<CreatePost />} />
             <Route path="/edit-post/:id" element={<CreatePost />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>
       </BrowserRouter>

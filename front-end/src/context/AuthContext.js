@@ -99,6 +99,11 @@ export function AuthProvider({ children }) {
     setUser(res.data.user);
   };
 
+  // Update user handler
+  const updateUser = (userData) => {
+    setUser(userData);
+  };
+
   // - Return the provider with values accessible by child components
   // - This part returns "Context Provider" which shares data ie: user data with other components in your app
   // eg: Hey app heres the "AuthContext.Provider" where i stored the login stuff.Don't show the actual app (children) until we finish checking if user is logged in.
@@ -110,6 +115,7 @@ export function AuthProvider({ children }) {
         login,
         logout,
         register,
+        updateUser,
       }}
     >
       {/* Only render children after loading is complete */}

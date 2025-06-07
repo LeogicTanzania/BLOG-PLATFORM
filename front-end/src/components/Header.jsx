@@ -17,10 +17,10 @@ export default function Header() {
         </Link>
 
         <div className="nav-links">
-          {/* If user is logged in, show 'New Post' & 'LogOut' */}
+          {/* If user is logged in, show 'New Post', 'Profile' & 'LogOut' */}
           {user ? (
             <>
-              <Link to="/create-post">New Post</Link>
+              <Link to="/profile">Profile</Link>
               <button onClick={logout}>Logout</button>
             </>
           ) : (
