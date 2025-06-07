@@ -1,6 +1,13 @@
 import { useForm } from "react-hook-form";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useState, useRef } from "react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+// Default avatar as base64 string (same as in Profile.jsx)
+const defaultAvatar =
+  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSIxMDAiIGZpbGw9IiNFMkU4RjAiLz4KICA8Y2lyY2xlIGN4PSIxMDAiIGN5PSI4MCIgcj0iNDAiIGZpbGw9IiM5NEEzQjgiLz4KICA8cGF0aCBkPSJNNDAgMTgwQzQwIDE0MCA2NSAxMjAgMTAwIDEyMEMxMzUgMTIwIDE2MCAxNDAgMTYwIDE4MEgxODBDMTgwIDEzMCAxNDUgMTAwIDEwMCAxMDBDNTUgMTAwIDIwIDEzMCAyMCAxODBINDBaIiBmaWxsPSIjOTRBM0I4Ii8+Cjwvc3ZnPgo=";
 
 export default function Register() {
   const {
@@ -11,13 +18,50 @@ export default function Register() {
   } = useForm();
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
+  const [previewImage, setPreviewImage] = useState(defaultAvatar);
+  const fileInputRef = useRef(null);
 
-  const onSubmit = async ({ username, email, password }) => {
+  const handleImageClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const onSubmit = async (data) => {
     try {
-      await registerUser(username, email, password);
+      const formData = new FormData();
+      formData.append("username", data.username);
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+
+      if (fileInputRef.current?.files[0]) {
+        formData.append("image", fileInputRef.current.files[0]);
+      }
+
+      await registerUser(formData);
+      toast.success("Registration successful!");
       navigate("/"); // Redirect to home after successful registration
     } catch (error) {
       console.error("Registration Failed:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Registration failed. Please try again.";
+      toast.error(errorMessage);
     }
   };
 
@@ -26,6 +70,22 @@ export default function Register() {
       <h1 className="login-register-title">Create Your Account</h1>
 
       <form className="login-register-form" onSubmit={handleSubmit(onSubmit)}>
+        <div className="profile-photo-section">
+          <div className="profile-photo-container" onClick={handleImageClick}>
+            <img src={previewImage} alt="Profile" className="profile-photo" />
+            <div className="photo-overlay">
+              <span>Add Photo</span>
+            </div>
+          </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            accept="image/*"
+            style={{ display: "none" }}
+          />
+        </div>
+
         <div className="form-group">
           <input
             className={`form-input ${errors.username ? "input-error" : ""}`}

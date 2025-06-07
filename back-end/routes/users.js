@@ -8,12 +8,16 @@ const {
   registerUser,
   loginUser,
   getCurrentUser,
+  updateProfile,
 } = require("../controllers/authController");
 const { protect } = require("../middlewares/auth");
+const { uploadImage, handleImageUpload } = require("../middlewares/upload");
 
 // REGISTER USER
 router.post(
   "/register",
+  uploadImage,
+  handleImageUpload,
   [
     check("username", "Username is required").not().isEmpty(),
     check("email", "Please include a valid email").isEmail(),
@@ -36,5 +40,20 @@ router.post(
 
 // GET CURRENT USER
 router.get("/CurrentUser", protect, getCurrentUser);
+
+// UPDATE PROFILE
+router.put(
+  "/profile",
+  [
+    protect,
+    uploadImage,
+    handleImageUpload,
+    [
+      check("username", "Username is required").not().isEmpty(),
+      check("email", "Please include a valid email").isEmail(),
+    ],
+  ],
+  updateProfile
+);
 
 module.exports = router;

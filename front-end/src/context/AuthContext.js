@@ -85,18 +85,29 @@ export function AuthProvider({ children }) {
   };
 
   // Register handler
-  const register = async (username, email, password) => {
-    const requestBody = {
-      username,
-      email,
-      password,
-    };
+  const register = async (formData) => {
+    try {
+      const res = await api.post("/api/auth/register", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    const res = await api.post("/api/auth/register", requestBody);
+      // Save token & user data in localStorage & state
+      localStorage.setItem("token", res.data.token);
+      setUser(res.data.user);
 
-    // Save token & user data in localStorage & state
-    localStorage.setItem("token", res.data.token);
-    setUser(res.data.user);
+      // Set the default authorization header for future requests
+      api.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
+
+      return res.data;
+    } catch (error) {
+      // Remove any existing token and user data
+      localStorage.removeItem("token");
+      setUser(null);
+      // Re-throw the error to be handled by the component
+      throw error;
+    }
   };
 
   // Update user handler

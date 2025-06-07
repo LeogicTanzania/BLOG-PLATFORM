@@ -18,24 +18,13 @@ const upload = multer({
 // Upload image to Cloudinary
 exports.uploadImage = upload.single("image");
 exports.handleImageUpload = async (req, res, next) => {
-  console.log("File in request:", req.file);
-  console.log("Request body:", req.body);
-
-  // If no file is uploaded and we're not removing the image, keep the existing image
-  if (!req.file && !req.body.removeImage) {
-    console.log("No file uploaded, keeping existing image");
-    return next();
-  }
-
-  // If we're removing the image, set it to empty string
-  if (req.body.removeImage === "true") {
-    console.log("Removing image");
-    req.body.image = "";
-    return next();
-  }
-
   try {
-    console.log("Uploading image to Cloudinary");
+    // If no file is uploaded, continue without image
+    if (!req.file) {
+      return next();
+    }
+
+    // Upload to Cloudinary
     const result = await uploader.upload(
       `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
       {
@@ -44,7 +33,7 @@ exports.handleImageUpload = async (req, res, next) => {
       }
     );
 
-    console.log("Cloudinary upload result:", result);
+    // Add the image URL to the request body
     req.body.image = result.secure_url;
     next();
   } catch (err) {

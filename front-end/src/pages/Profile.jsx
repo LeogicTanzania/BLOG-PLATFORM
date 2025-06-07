@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
@@ -23,6 +23,7 @@ export default function Profile() {
     formState: { errors },
     watch,
     reset,
+    setValue,
   } = useForm({
     defaultValues: {
       username: user?.username || "",
@@ -32,6 +33,14 @@ export default function Profile() {
       confirmPassword: "",
     },
   });
+
+  // Update form values when user data changes
+  useEffect(() => {
+    if (user) {
+      setValue("username", user.username);
+      setValue("email", user.email);
+    }
+  }, [user, setValue]);
 
   const handleImageClick = () => {
     fileInputRef.current.click();
@@ -62,37 +71,58 @@ export default function Profile() {
       formData.append("username", data.username);
       formData.append("email", data.email);
 
+      let updateMessage = "Profile updated successfully!";
+
       // Add password fields if they are filled
       if (showPasswordFields && data.currentPassword && data.newPassword) {
         formData.append("currentPassword", data.currentPassword);
         formData.append("newPassword", data.newPassword);
+        updateMessage = "Profile and password updated successfully!";
       }
 
+      // Add profile photo if changed
       if (fileInputRef.current?.files[0]) {
-        formData.append("profilePhoto", fileInputRef.current.files[0]);
+        formData.append("image", fileInputRef.current.files[0]);
+        updateMessage = showPasswordFields
+          ? "Profile, password, and photo updated successfully!"
+          : "Profile and photo updated successfully!";
       }
 
-      const response = await api.put("/api/users/profile", formData, {
+      const response = await api.put("/api/auth/profile", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
       updateUser(response.data.data);
-      toast.success("Profile updated successfully!");
+      toast.success(updateMessage, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
 
-      // Reset password fields and hide them
+      // Only reset password fields
       if (showPasswordFields) {
-        reset({
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        });
+        setValue("currentPassword", "");
+        setValue("newPassword", "");
+        setValue("confirmPassword", "");
         setShowPasswordFields(false);
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error(error.response?.data?.message || "Failed to update profile");
+      const errorMessage =
+        error.response?.data?.message || "Failed to update profile";
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } finally {
       setIsLoading(false);
     }
