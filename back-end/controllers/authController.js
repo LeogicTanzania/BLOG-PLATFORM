@@ -23,24 +23,43 @@ exports.registerUser = async (req, res, next) => {
 exports.loginUser = async (req, res, next) => {
   const { email, password } = req.body;
 
-  // Check for user
-  const user = await User.findOne({ email }).select("+password");
+  try {
+    // Check for user
+    const user = await User.findOne({ email }).select("+password");
 
-  if (!user) {
-    return next(new ErrorResponse("Invalid Credentials", 401));
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // Check password
+    const isMatch = await user.matchPassword(password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // Create JWT
+    const token = user.getSignedJwtToken();
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        profilePhoto: user.profilePhoto,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
-
-  // Check password
-  const isMatch = await user.matchPassword(password);
-
-  if (!isMatch) {
-    return next(new ErrorResponse("Invalid Credentials", 401));
-  }
-
-  // Create JWT
-  const token = user.getSignedJwtToken();
-
-  res.status(200).json({ success: true, token });
 };
 
 // Get current user

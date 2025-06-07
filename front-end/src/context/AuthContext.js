@@ -45,21 +45,34 @@ export function AuthProvider({ children }) {
 
   // Login handler
   const login = async (email, password) => {
-    const requestBody = {
-      email,
-      password,
-    };
+    try {
+      const requestBody = {
+        email,
+        password,
+      };
 
-    const res = await api.post("/api/auth/login", requestBody);
+      const res = await api.post("/api/auth/login", requestBody);
 
-    // Save received token in localStorage
-    localStorage.setItem("token", res.data.token);
+      // Save received token in localStorage
+      localStorage.setItem("token", res.data.token);
 
-    // Save user data in state
-    setUser({
-      id: res.data.user._id,
-      username: res.data.user.username,
-    });
+      // Save user data in state
+      setUser({
+        _id: res.data.user._id,
+        username: res.data.user.username,
+        email: res.data.user.email,
+        profilePhoto: res.data.user.profilePhoto,
+      });
+
+      // Set the default authorization header for future requests
+      api.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
+    } catch (error) {
+      // Remove any existing token and user data
+      localStorage.removeItem("token");
+      setUser(null);
+      // Re-throw the error to be handled by the component
+      throw error;
+    }
   };
 
   // Logout handler
