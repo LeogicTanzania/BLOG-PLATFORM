@@ -10,6 +10,7 @@ const {
   deletePost,
   addComment,
   deleteComment,
+  incrementViews,
 } = require("../controllers/postController");
 const { protect } = require("../middlewares/auth");
 const { uploadImage, handleImageUpload } = require("../middlewares/upload");
@@ -65,5 +66,8 @@ router.post(
 
 // Delete comment from post
 router.delete("/:postId/comments/:commentId", protect, deleteComment);
+
+// Increment post views
+router.post("/:id/views", incrementViews);
 
 module.exports = router;

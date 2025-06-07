@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../services/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -14,6 +14,7 @@ export default function Post() {
   const { user } = useAuth();
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const viewCountedRef = useRef(false);
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,7 @@ export default function Post() {
     return () => window.removeEventListener("keydown", handleEscape);
   }, []);
 
-  // Fetch post details
+  // Separate effect for fetching post data
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -83,6 +84,22 @@ export default function Post() {
 
     fetchPost();
   }, [id, user]);
+
+  // Separate effect for handling view count
+  useEffect(() => {
+    const incrementViewCount = async () => {
+      if (!viewCountedRef.current && post) {
+        try {
+          await api.post(`/api/posts/${id}/views`);
+          viewCountedRef.current = true;
+        } catch (err) {
+          console.error("Failed to increment view count:", err);
+        }
+      }
+    };
+
+    incrementViewCount();
+  }, [id, post]);
 
   // Handle post deletion
   const handleDeletePost = async () => {
@@ -161,7 +178,6 @@ export default function Post() {
         isBookmarked ? "Removed from bookmarks" : "Added to bookmarks"
       );
     } catch (err) {
-      console.error("Failed to update bookmark:", err);
       toast.error("Failed to update bookmark");
     }
   };
@@ -201,43 +217,6 @@ export default function Post() {
       <div className="post-header">
         <div className="breadcrumb">
           <Link to="/">Home</Link> / <span>{post.title}</span>
-        </div>
-
-        <div className="post-actions">
-          <button
-            className={`action-button ${isBookmarked ? "bookmarked" : ""}`}
-            onClick={handleBookmark}
-            title={isBookmarked ? "Remove from bookmarks" : "Save to bookmarks"}
-          >
-            {isBookmarked ? "Bookmarked" : "Bookmark"}
-          </button>
-
-          <div className="like-container">
-            <button
-              className={`action-button ${isLiked ? "liked" : ""}`}
-              onClick={handleLike}
-            >
-              {isLiked ? "Liked" : "Like"}
-            </button>
-            <span className="like-count">{likeCount}</span>
-          </div>
-
-          {user && user.id === post.author._id && (
-            <>
-              <Link
-                to={`/edit-post/${post._id}`}
-                className="action-button edit-button"
-              >
-                Edit
-              </Link>
-              <button
-                className="action-button delete-button"
-                onClick={handleDeletePost}
-              >
-                Delete
-              </button>
-            </>
-          )}
         </div>
       </div>
 

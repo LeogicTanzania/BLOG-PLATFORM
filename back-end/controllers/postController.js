@@ -224,3 +224,25 @@ exports.deleteComment = async (req, res, next) => {
     next(error);
   }
 };
+
+// Increment post views
+exports.incrementViews = async (req, res, next) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return next(new ErrorResponse("Post not found", 404));
+    }
+
+    // Increment views
+    post.views = (post.views || 0) + 1;
+    await post.save();
+
+    res.status(200).json({
+      success: true,
+      data: { views: post.views },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
