@@ -95,6 +95,16 @@ exports.updatePost = async (req, res, next) => {
       return next(new ErrorResponse("Not authorized to update this post", 403));
     }
 
+    // Handle image removal
+    if (req.body.removeImage === "true") {
+      req.body.image = "";
+    }
+
+    // If no image is provided and we're not removing it, keep the existing image
+    if (!req.body.image && !req.body.removeImage) {
+      delete req.body.image;
+    }
+
     // Update post
     post = await Post.findByIdAndUpdate(req.params.id, req.body, {
       new: true,

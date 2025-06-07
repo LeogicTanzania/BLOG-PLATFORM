@@ -7,7 +7,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Post from "./pages/Post";
 import CreatePost from "./pages/CreatePost";
-import EditPost from "./pages/EditPost";
 import "./App.css";
 
 export default function App() {
@@ -18,19 +17,16 @@ export default function App() {
       <BrowserRouter>
         <Header />
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/posts/:id" element={<Post />} />
-          <Route path="/" element={<Home />} />
-          <Route path="/create-post" element={<CreatePost />} />
-          <Route path="/edit-post/:id" element={<EditPost />} />
 
-          {/* SECURITY GUARD: Wrapping protected routes in PrivateRoute to restrict access */}
-          {/* ie: "Hey these 2 routes should only be seen by logged-in users, if not don't let them in." */}
+          {/* Protected Routes */}
           <Route element={<PrivateRoute />}>
             <Route path="/create-post" element={<CreatePost />} />
-            <Route path="/edit-post" element={<EditPost />} />
+            <Route path="/edit-post/:id" element={<CreatePost />} />
           </Route>
         </Routes>
       </BrowserRouter>

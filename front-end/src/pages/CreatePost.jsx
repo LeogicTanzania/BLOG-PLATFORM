@@ -1,24 +1,60 @@
 import { useForm } from "react-hook-form";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function CreatePost() {
   const { user } = useAuth();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     resetField,
     setValue,
   } = useForm();
 
   const [imagePreview, setImagePreview] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
+  const [currentImage, setCurrentImage] = useState("");
+  const [isLoading, setIsLoading] = useState(isEditMode);
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // Fetch post data if in edit mode
+  useEffect(() => {
+    const fetchPost = async () => {
+      if (!isEditMode) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        const res = await api.get(`/api/posts/${id}`);
+        const post = res.data.data;
+
+        // Set form values
+        setValue("title", post.title);
+        setValue("content", post.content);
+        setValue("tags", post.tags?.join(", ") || "");
+        setCurrentImage(post.image || "");
+      } catch (error) {
+        console.error("Failed to fetch post:", error);
+        setError("Failed to load post. Please try again later.");
+        toast.error("Failed to load post");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPost();
+  }, [id, setValue, navigate, isEditMode]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -31,55 +67,90 @@ export default function CreatePost() {
     }
   };
 
-  const onSubmit = async (data) => {
-    if (!user) {
-      toast.error("You must be logged in to create a post");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    const formData = new FormData();
-    formData.append("title", data.title);
-    formData.append("content", data.content);
-    formData.append("tags", data.tags);
-    if (data.image[0]) {
-      formData.append("image", data.image[0]);
-    }
-
-    try {
-      const res = await api.post("/api/posts/create-post", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      toast.success("Post created Successfully!");
-      navigate(`/posts/${res.data.data._id}`);
-    } catch (error) {
-      console.error("Post Creation Failed:", error);
-      toast.error(error.response?.data?.message || "Failed to create post");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const fileInputRef = useRef(null);
   const handleRemoveImage = () => {
     setImagePreview(null);
-
+    setCurrentImage("");
     resetField("image");
-
-    setValue("image", null);
-
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
+  const onSubmit = async (data) => {
+    if (!user) {
+      toast.error("You must be logged in to create/edit a post");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("title", data.title);
+      formData.append("content", data.content);
+      formData.append("tags", data.tags);
+
+      // Handle image upload
+      const fileInput = fileInputRef.current;
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        console.log("Adding image to form data:", fileInput.files[0]);
+        formData.append("image", fileInput.files[0]);
+      } else if (isEditMode && !currentImage && !imagePreview) {
+        console.log("Removing image");
+        formData.append("removeImage", "true");
+      }
+
+      // Log form data contents
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ": " + pair[1]);
+      }
+
+      let res;
+      if (isEditMode) {
+        res = await api.put(`/api/posts/${id}`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        toast.success("Post updated successfully!");
+      } else {
+        res = await api.post("/api/posts/create-post", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        toast.success("Post created successfully!");
+      }
+      navigate(`/posts/${res.data.data._id}`);
+    } catch (error) {
+      console.error("Post operation failed:", error);
+      toast.error(
+        error.response?.data?.message ||
+          `Failed to ${isEditMode ? "update" : "create"} post`
+      );
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading post...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <h2>Error Loading Post</h2>
+        <p>{error}</p>
+        <button onClick={() => navigate(-1)}>Go Back</button>
+      </div>
+    );
+  }
+
   return (
     <div className="create-post-container">
-      <h1>Create New Post</h1>
+      <h1>{isEditMode ? "Edit Post" : "Create New Post"}</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="post-form">
         <div className="form-group">
           <label htmlFor="title">Title</label>
@@ -124,23 +195,22 @@ export default function CreatePost() {
             id="image"
             type="file"
             accept="image/*"
-            {...register("image")}
             onChange={handleImageChange}
+            ref={fileInputRef}
           />
-          {imagePreview && (
+          {(imagePreview || currentImage) && (
             <div className="image-preview-container">
               <div className="image-preview">
                 <img
-                  src={imagePreview}
+                  src={imagePreview || currentImage}
                   alt="Preview"
                   onLoad={() => console.log("Image loaded")}
                 />
               </div>
               <button
+                type="button"
                 className="remove-image-btn"
-                onClick={() => {
-                  handleRemoveImage();
-                }}
+                onClick={handleRemoveImage}
               >
                 Remove Image
               </button>
@@ -148,9 +218,28 @@ export default function CreatePost() {
           )}
         </div>
 
-        <button type="submit" className="submit-button" disabled={isSubmitting}>
-          {isSubmitting ? "Publishing..." : "Publish Post"}
-        </button>
+        <div className="form-actions">
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? isEditMode
+                ? "Saving..."
+                : "Publishing..."
+              : isEditMode
+              ? "Save Changes"
+              : "Publish Post"}
+          </button>
+          <button
+            type="button"
+            className="cancel-button"
+            onClick={() => navigate(-1)}
+          >
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );
