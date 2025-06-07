@@ -117,6 +117,20 @@ export default function Post() {
     }
   };
 
+  // Handle comment deletion
+  const handleDeleteComment = async (commentId) => {
+    if (window.confirm("Are you sure you want to delete this comment?")) {
+      try {
+        await api.delete(`/api/posts/${id}/comments/${commentId}`);
+        setComments(comments.filter((comment) => comment._id !== commentId));
+        toast.success("Comment deleted successfully");
+      } catch (err) {
+        console.error("Failed to delete comment:", err);
+        toast.error("Failed to delete comment");
+      }
+    }
+  };
+
   // Handle like action
   const handleLike = async () => {
     try {
@@ -340,6 +354,7 @@ export default function Post() {
               disabled={!newComment.trim()}
             >
               Post Comment
+              <i className="fas fa-paper-plane"></i>
             </button>
           </form>
         ) : (
@@ -361,7 +376,7 @@ export default function Post() {
                     alt={comment.author.username}
                     className="comment-avatar"
                   />
-                  <div>
+                  <div className="comment-author-info">
                     <span className="comment-author">
                       {comment.author.username}
                     </span>
@@ -369,6 +384,16 @@ export default function Post() {
                       {moment(comment.createdAt).fromNow()}
                     </span>
                   </div>
+                  {user &&
+                    (user._id === comment.author._id ||
+                      user.role === "admin") && (
+                      <button
+                        onClick={() => handleDeleteComment(comment._id)}
+                        className="delete-comment-button"
+                      >
+                        Delete
+                      </button>
+                    )}
                 </div>
                 <div className="comment-content">
                   <p>{comment.content}</p>

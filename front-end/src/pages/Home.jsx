@@ -6,6 +6,7 @@ import defaultAvatar from "../assets/avatar.jpg";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import moment from "moment";
 
 export default function Home() {
   const { user } = useAuth();
@@ -141,6 +142,7 @@ export default function Home() {
                                 to={`/edit-post/${post._id}`}
                                 className="edit-button"
                               >
+                                <i className="fas fa-pencil"></i>
                                 Edit
                               </Link>
                               <button
@@ -154,7 +156,10 @@ export default function Home() {
                                     Deleting...
                                   </>
                                 ) : (
-                                  "Delete"
+                                  <>
+                                    <i className="fas fa-trash"></i>
+                                    Delete
+                                  </>
                                 )}
                               </button>
                             </div>
@@ -162,14 +167,25 @@ export default function Home() {
                           <p className="post-excerpt">
                             {post.content.substring(0, 150)}...
                           </p>
-                          <br />
                           <div className="post-stats">
-                            <span>Views: {post.views || 0}</span>
-                            <span>Comments: {post.comments?.length || 0}</span>
-                            <span>
-                              Created:{" "}
-                              {new Date(post.createdAt).toLocaleDateString()}
-                            </span>
+                            <div className="stat-item">
+                              <i className="fas fa-eye"></i>
+                              <span className="stat-value">
+                                {post.views || 0}
+                              </span>
+                            </div>
+                            <div className="stat-item">
+                              <i className="fas fa-comment"></i>
+                              <span className="stat-value">
+                                {post.comments?.length || 0}
+                              </span>
+                            </div>
+                            <div className="stat-item">
+                              <i className="fas fa-clock"></i>
+                              <span className="stat-value">
+                                {moment(post.createdAt).fromNow()}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       ))
@@ -194,28 +210,43 @@ export default function Home() {
                             <img
                               src={post.author.profilePhoto || defaultAvatar}
                               alt={post.author.username}
-                              style={{
-                                width: "64px",
-                                height: "64px",
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                              }}
+                              className="author-avatar"
                             />
-                            <span>
-                              <b>{post.author.username}</b>
+                            <span className="author-name">
+                              {post.author.username}
                             </span>
                           </div>
                           <h3>{post.title}</h3>
-                          <br />
                           <p className="post-excerpt">
                             {post.content.substring(0, 200)}...
                           </p>
+                          <div className="post-stats">
+                            <div className="stat-item">
+                              <i className="fas fa-eye"></i>
+                              <span className="stat-value">
+                                {post.views || 0}
+                              </span>
+                            </div>
+                            <div className="stat-item">
+                              <i className="fas fa-comment"></i>
+                              <span className="stat-value">
+                                {post.comments?.length || 0}
+                              </span>
+                            </div>
+                            <div className="stat-item">
+                              <i className="fas fa-clock"></i>
+                              <span className="stat-value">
+                                {moment(post.createdAt).fromNow()}
+                              </span>
+                            </div>
+                          </div>
                           <div className="post-actions">
                             <Link
                               to={`/posts/${post._id}`}
                               className="read-more"
                             >
                               Read More
+                              <i className="fas fa-arrow-right"></i>
                             </Link>
                           </div>
                         </div>
@@ -233,17 +264,35 @@ export default function Home() {
 
           {/* RIGHT COLUMN - SIDEBAR */}
           <div className="dashboard-sidebar">
-            <div className="sidebar-section">
-              <h4>Quick Stats</h4>
-              <div className="stat-item">
-                <span>Total Posts:</span>
-                <span>{userPosts.length}</span>
-              </div>
-              <div className="stat-item">
-                <span>Total Views:</span>
-                <span>
-                  {userPosts.reduce((sum, post) => sum + (post.views || 0), 0)}
-                </span>
+            <div className="quick-stats">
+              <h3>
+                <span>📊</span> Quick Stats
+              </h3>
+              <div className="stats-grid">
+                <div className="stat-box">
+                  <div className="stat-label">My Posts</div>
+                  <div className="stat-value">{userPosts.length}</div>
+                  <div className="stat-trend trend-up">
+                    +{userPosts.length} this month
+                  </div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-label">Total Views</div>
+                  <div className="stat-value">
+                    {userPosts.reduce(
+                      (sum, post) => sum + (post.views || 0),
+                      0
+                    )}
+                  </div>
+                  <div className="stat-trend trend-up">
+                    +
+                    {userPosts.reduce(
+                      (sum, post) => sum + (post.views || 0),
+                      0
+                    )}{" "}
+                    views
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -329,15 +378,29 @@ export default function Home() {
       <section className="stats-section">
         <div className="stats-container">
           <div className="stat-item">
-            <h4>10k+</h4>
+            <h4>
+              {loadingPublicPosts
+                ? "..."
+                : `${
+                    [...new Set(publicPosts.map((post) => post.author._id))]
+                      .length
+                  }+`}
+            </h4>
             <p>Active Writers</p>
           </div>
           <div className="stat-item">
-            <h4>50k+</h4>
-            <p>Monthly Readers</p>
+            <h4>
+              {loadingPublicPosts
+                ? "..."
+                : `${publicPosts.reduce(
+                    (sum, post) => sum + (post.views || 0),
+                    0
+                  )}+`}
+            </h4>
+            <p>Total Views</p>
           </div>
           <div className="stat-item">
-            <h4>100k+</h4>
+            <h4>{loadingPublicPosts ? "..." : `${publicPosts.length}+`}</h4>
             <p>Stories Published</p>
           </div>
         </div>
@@ -346,14 +409,14 @@ export default function Home() {
       {/* Testimonial */}
       <section className="testimonial">
         <blockquote>
-          "As a new writer, I gained 500 readers in my first month!"
-          <cite>- Jane D.</cite>
+          "As a beginner writer, I gained 500 readers in my first month!"
+          <cite>- Eric Bwire</cite>
         </blockquote>
       </section>
 
       {/* Floating CTA */}
       <div className="floating-cta">
-        <p>Ready to join? It only takes 30 seconds</p>
+        <p>Ready to join? It only takes 60 seconds</p>
         <Link to="/register" className="cta-button">
           Create Free Account
         </Link>

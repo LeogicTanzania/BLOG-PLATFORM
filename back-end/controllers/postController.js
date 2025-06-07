@@ -5,7 +5,9 @@ const Post = require("../models/Post");
 exports.getAllPosts = async (req, res, next) => {
   try {
     // Find all posts in DB & populate author info excluding password
-    const posts = await Post.find().populate("author", "username profilePhoto");
+    const posts = await Post.find()
+      .populate("author", "username profilePhoto")
+      .populate("comments.author", "username profilePhoto");
 
     res.status(200).json({
       success: true,
@@ -21,10 +23,9 @@ exports.getAllPosts = async (req, res, next) => {
 exports.getSinglePost = async (req, res, next) => {
   try {
     // Find post by id
-    const post = await Post.findById(req.params.id).populate(
-      "author",
-      "username profilePhoto"
-    );
+    const post = await Post.findById(req.params.id)
+      .populate("author", "username profilePhoto")
+      .populate("comments.author", "username profilePhoto");
 
     // If post doesnt exist then...
     if (!post) {
@@ -50,6 +51,7 @@ exports.getPostsByUser = async (req, res, next) => {
     // Find all posts by this user
     const posts = await Post.find({ author: userId })
       .populate("author", "username profilePhoto")
+      .populate("comments.author", "username profilePhoto")
       .sort({ createdAt: -1 }); // Newest First
 
     res.status(200).json({
@@ -137,6 +139,82 @@ exports.deletePost = async (req, res, next) => {
     }
 
     await post.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Add comment to post
+exports.addComment = async (req, res, next) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return next(new ErrorResponse("Post not found", 404));
+    }
+
+    // Create new comment
+    const newComment = {
+      content: req.body.content,
+      author: req.user.id,
+    };
+
+    // Add comment to post
+    post.comments.unshift(newComment);
+    await post.save();
+
+    // Fetch the updated post with populated comments
+    const updatedPost = await Post.findById(req.params.id).populate(
+      "comments.author",
+      "username profilePhoto"
+    );
+
+    // Return only the new comment
+    const addedComment = updatedPost.comments[0];
+
+    res.status(200).json({
+      success: true,
+      data: addedComment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Delete comment from post
+exports.deleteComment = async (req, res, next) => {
+  try {
+    const post = await Post.findById(req.params.postId);
+
+    if (!post) {
+      return next(new ErrorResponse("Post not found", 404));
+    }
+
+    // Find comment
+    const comment = post.comments.id(req.params.commentId);
+
+    if (!comment) {
+      return next(new ErrorResponse("Comment not found", 404));
+    }
+
+    // Check user ownership of comment
+    if (
+      comment.author.toString() !== req.user.id &&
+      req.user.role !== "admin"
+    ) {
+      return next(
+        new ErrorResponse("Not authorized to delete this comment", 403)
+      );
+    }
+
+    // Remove comment
+    comment.deleteOne();
+    await post.save();
 
     res.status(200).json({
       success: true,

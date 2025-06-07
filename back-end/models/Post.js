@@ -1,5 +1,21 @@
 const mongoose = require("mongoose");
 
+const commentSchema = new mongoose.Schema({
+  content: {
+    type: String,
+    required: [true, "Comment content is required"],
+  },
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Users_Blog_Platform",
+    required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 const postSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -24,6 +40,7 @@ const postSchema = new mongoose.Schema({
     ref: "Users_Blog_Platform",
     required: true,
   },
+  comments: [commentSchema],
   createdAt: {
     type: Date,
     default: Date.now,
