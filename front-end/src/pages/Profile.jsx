@@ -197,7 +197,11 @@ export default function Profile() {
           </button>
 
           {showPasswordFields && (
-            <>
+            <div
+              className={`password-fields ${
+                showPasswordFields ? "visible" : ""
+              }`}
+            >
               <div className="form-group">
                 <label htmlFor="currentPassword">Current Password</label>
                 <input
@@ -258,7 +262,7 @@ export default function Profile() {
                   </p>
                 )}
               </div>
-            </>
+            </div>
           )}
         </div>
 

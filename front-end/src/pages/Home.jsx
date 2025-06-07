@@ -51,7 +51,11 @@ export default function Home() {
     const fetchPublicPosts = async () => {
       try {
         const res = await api.get("/api/posts/");
-        setPublicPosts(res.data.data);
+        // Sort posts by creation date, newest first
+        const sortedPosts = res.data.data.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        setPublicPosts(sortedPosts);
       } catch (error) {
         console.error("Failed to fetch public posts:", error);
       } finally {
@@ -68,7 +72,11 @@ export default function Home() {
       if (user?._id) {
         try {
           const res = await api.get(`/api/posts/user/${user._id}`);
-          setUserPosts(res.data.data);
+          // Sort user posts by creation date, newest first
+          const sortedPosts = res.data.data.sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          );
+          setUserPosts(sortedPosts);
         } catch (error) {
           console.error("Failed to fetch user's posts:", error);
         } finally {
@@ -193,7 +201,9 @@ export default function Home() {
                                 objectFit: "cover",
                               }}
                             />
-                            <span>{post.author.username}</span>
+                            <span>
+                              <b>{post.author.username}</b>
+                            </span>
                           </div>
                           <h3>{post.title}</h3>
                           <br />

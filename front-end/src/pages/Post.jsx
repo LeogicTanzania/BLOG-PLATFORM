@@ -12,6 +12,8 @@ export default function Post() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,6 +23,39 @@ export default function Post() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+
+  // Handle image click
+  const handleImageClick = () => {
+    setIsImageModalOpen(true);
+    // Reset zoom level when opening modal
+    setZoomLevel(1);
+  };
+
+  // Handle modal close
+  const handleCloseModal = () => {
+    setIsImageModalOpen(false);
+  };
+
+  // Handle zoom controls
+  const handleZoom = (direction) => {
+    if (direction === "in" && zoomLevel < 3) {
+      setZoomLevel((prev) => prev + 0.5);
+    } else if (direction === "out" && zoomLevel > 0.5) {
+      setZoomLevel((prev) => prev - 0.5);
+    }
+  };
+
+  // Close modal on escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        setIsImageModalOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, []);
 
   // Fetch post details
   useEffect(() => {
@@ -219,9 +254,48 @@ export default function Post() {
         </div>
 
         {post.image && (
-          <div className="post-image-container">
-            <img src={post.image} alt={post.title} className="post-image" />
-          </div>
+          <>
+            <div className="post-image-container" onClick={handleImageClick}>
+              <img src={post.image} alt={post.title} className="post-image" />
+            </div>
+
+            {/* Image Modal */}
+            <div
+              className={`image-modal-overlay ${
+                isImageModalOpen ? "visible" : ""
+              }`}
+              onClick={handleCloseModal}
+            >
+              <div
+                className="modal-content"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button className="modal-close" onClick={handleCloseModal}>
+                  ×
+                </button>
+                <img
+                  src={post.image}
+                  alt={post.title}
+                  className="modal-image"
+                  style={{ transform: `scale(${zoomLevel})` }}
+                />
+                <div className="zoom-controls">
+                  <button
+                    className="zoom-button"
+                    onClick={() => handleZoom("out")}
+                  >
+                    −
+                  </button>
+                  <button
+                    className="zoom-button"
+                    onClick={() => handleZoom("in")}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         <div className="post-body">
