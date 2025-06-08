@@ -56,7 +56,8 @@ export default function Home() {
         const sortedPosts = res.data.data.sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
-        setPublicPosts(sortedPosts);
+        // If user is not logged in, only show 3 posts
+        setPublicPosts(user ? sortedPosts : sortedPosts.slice(0, 3));
       } catch (error) {
         console.error("Failed to fetch public posts:", error);
       } finally {
@@ -65,7 +66,7 @@ export default function Home() {
     };
 
     fetchPublicPosts();
-  }, []);
+  }, [user]);
 
   // Fetch user's posts
   useEffect(() => {
