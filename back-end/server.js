@@ -21,7 +21,11 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // enable CORS
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://blog-platform-z249.onrender.com",
+  })
+);
 
 // Register routes
 app.use("/api/auth", userRoutes);
